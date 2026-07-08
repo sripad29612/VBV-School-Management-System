@@ -1409,11 +1409,13 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
+    maxWidth: 500,
     borderRadius: 20,
     padding: 16,
   },
   smallModalContent: {
     width: '80%',
+    maxWidth: 380,
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',

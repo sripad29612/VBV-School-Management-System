@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Modal, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, TextInput, ActivityIndicator, Modal, Image, Alert, useWindowDimensions } from 'react-native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { colors } from '../../theme/colors';
@@ -24,6 +24,7 @@ interface AdminFeesProps {
 
 export const AdminFees: React.FC<AdminFeesProps> = (props) => {
   const { onNavigate, onSyncAllPortals, initialStudentId, clearInitialStudentId, openReceiptOnLoad, clearOpenReceiptOnLoad, refreshTrigger } = props;
+  const { width: windowWidth } = useWindowDimensions();
   const isDarkMode = useSelector((state: RootState) => state.theme.isDarkMode);
   const theme = isDarkMode ? colors.dark : colors.light;
 
@@ -1131,16 +1132,16 @@ export const AdminFees: React.FC<AdminFeesProps> = (props) => {
                       </View>
 
                       {/* Defaulter action bar */}
-                      <View style={styles.defaulterActionBox}>
-                        <Pressable onPress={() => handleActionClick('Call parent', def.parentPhone)} style={[styles.defBtn, { borderColor: theme.border }]}>
+                      <View style={[styles.defaulterActionBox, { flexWrap: 'wrap', justifyContent: 'flex-start' }]}>
+                        <Pressable onPress={() => handleActionClick('Call parent', def.parentPhone)} style={[styles.defBtn, { borderColor: theme.border, minWidth: windowWidth < 600 ? '48%' : '22%', marginBottom: windowWidth < 600 ? 6 : 0 }]}>
                           <Phone size={11} color={theme.text} />
                           <Text style={{ fontSize: 9, color: theme.text, marginLeft: 4 }}>Call Parent</Text>
                         </Pressable>
-                        <Pressable onPress={() => handleActionClick('WhatsApp message', def.parentPhone)} style={[styles.defBtn, { borderColor: theme.border }]}>
+                        <Pressable onPress={() => handleActionClick('WhatsApp message', def.parentPhone)} style={[styles.defBtn, { borderColor: theme.border, minWidth: windowWidth < 600 ? '48%' : '22%', marginBottom: windowWidth < 600 ? 6 : 0 }]}>
                           <Send size={11} color="#10B981" />
                           <Text style={{ fontSize: 9, color: theme.text, marginLeft: 4 }}>WhatsApp</Text>
                         </Pressable>
-                        <Pressable onPress={() => handleSendReminder(def.id)} style={[styles.defBtn, { borderColor: theme.border }]}>
+                        <Pressable onPress={() => handleSendReminder(def.id)} style={[styles.defBtn, { borderColor: theme.border, minWidth: windowWidth < 600 ? '48%' : '22%', marginBottom: windowWidth < 600 ? 6 : 0 }]}>
                           <Mail size={11} color="#3B82F6" />
                           <Text style={{ fontSize: 9, color: theme.text, marginLeft: 4 }}>Send Reminder</Text>
                         </Pressable>
@@ -1149,7 +1150,7 @@ export const AdminFees: React.FC<AdminFeesProps> = (props) => {
                             setSelectedStudentId(def.studentId);
                             setShowCollectModal(true);
                           }} 
-                          style={[styles.defBtn, { backgroundColor: '#EF4444', borderColor: '#EF4444' }]}
+                          style={[styles.defBtn, { backgroundColor: '#EF4444', borderColor: '#EF4444', minWidth: windowWidth < 600 ? '48%' : '22%', marginBottom: windowWidth < 600 ? 6 : 0 }]}
                         >
                           <DollarSign size={11} color="#ffffff" />
                           <Text style={{ fontSize: 9, color: '#ffffff', marginLeft: 4 }}>Collect</Text>
@@ -2269,6 +2270,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '100%',
+    maxWidth: 500,
     borderRadius: 20,
     padding: 16,
   },

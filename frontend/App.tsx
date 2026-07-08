@@ -34,6 +34,7 @@ const setVisitedSession = () => {
 
 const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
   const [fadeOut, setFadeOut] = useState(false);
+  const { width: windowWidth } = useWindowDimensions();
 
   const fadeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const finishTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,6 +55,12 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
       if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
     };
   }, []);
+
+  const welcomeSize = windowWidth < 480 ? 18 : (windowWidth < 768 ? 22 : 26);
+  const welcomeLetterSpacing = windowWidth < 480 ? 4 : (windowWidth < 768 ? 6 : 8);
+  const titleSize = windowWidth < 480 ? 32 : (windowWidth < 768 ? 48 : 72);
+  const mottoSize = windowWidth < 480 ? 11 : (windowWidth < 768 ? 13 : 16);
+  const gapSize = windowWidth < 480 ? 8 : 16;
 
   return (
     <View 
@@ -77,15 +84,15 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
         {...{ className: "intro-word intro-welcome" } as any}
         style={{
           color: '#F5A623',
-          fontSize: 26,
+          fontSize: welcomeSize,
           fontWeight: '800',
-          letterSpacing: 8,
+          letterSpacing: welcomeLetterSpacing,
           textAlign: 'center',
         }}
       >
         WELCOME TO
       </Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 16, marginVertical: 20 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: gapSize, marginVertical: 20 }}>
         <Text 
           {...{ className: "intro-word intro-title-1" } as any}
           style={{
@@ -93,7 +100,7 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
             fontWeight: '900',
             letterSpacing: 2,
             lineHeight: 1.1,
-            fontSize: 72,
+            fontSize: titleSize,
           }}
         >
           VIDYA
@@ -105,7 +112,7 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
             fontWeight: '900',
             letterSpacing: 2,
             lineHeight: 1.1,
-            fontSize: 72,
+            fontSize: titleSize,
           }}
         >
           BHARATHI
@@ -117,7 +124,7 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
             fontWeight: '900',
             letterSpacing: 2,
             lineHeight: 1.1,
-            fontSize: 72,
+            fontSize: titleSize,
           }}
         >
           VIDYAPEETH
@@ -127,7 +134,7 @@ const WelcomeIntroOverlay = ({ onFinish }: { onFinish: () => void }) => {
         {...{ className: "intro-word intro-motto" } as any}
         style={{
           color: 'rgba(255,255,255,0.6)',
-          fontSize: 16,
+          fontSize: mottoSize,
           fontWeight: '600',
           letterSpacing: 3,
           marginTop: 10,
@@ -212,6 +219,9 @@ const MainAppRouter = () => {
     if (isAuthenticated) return false;
     if (typeof window !== 'undefined') {
       try {
+        if (window.innerWidth < 768) {
+          return false;
+        }
         return !sessionStorage.getItem('vbv_first_visit_intro');
       } catch (e) {
         return true;
@@ -245,6 +255,9 @@ const MainAppRouter = () => {
 
   // Screen width for responsive navigation
   const { width: windowWidth } = useWindowDimensions();
+  const isMobile = windowWidth ? windowWidth < 768 : (typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  // Responsive UI calculations (now handled purely via CSS class media queries)
 
   // Scroll offset state for translucent navbar
   const [scrolled, setScrolled] = useState(false);
@@ -325,7 +338,18 @@ const MainAppRouter = () => {
   const scrollToSection = (sectionName: string) => {
     setMobileMenuOpen(false);
 
-    if (sectionName === 'enquiry-form') {
+    let targetSection = sectionName;
+    if (isMobile && targetSection === 'enquiry-form') {
+      targetSection = 'contact';
+    }
+
+    if (targetSection === 'home') {
+      setActiveSection('home');
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      return;
+    }
+
+    if (targetSection === 'enquiry-form') {
       setEnquiryFormVisible(true);
       setActiveSection('enquiry-form');
       
@@ -339,18 +363,18 @@ const MainAppRouter = () => {
       return;
     }
 
-    setActiveSection(sectionName);
+    setActiveSection(targetSection);
     if (currentScreen !== 'welcome') {
       setCurrentScreen('welcome');
       // Wait a moment for rendering before scrolling
       setTimeout(() => {
-        const y = sectionLayouts[sectionName];
+        const y = sectionLayouts[targetSection];
         if (y !== undefined) {
           scrollViewRef.current?.scrollTo({ y: y - HEADER_HEIGHT, animated: true });
         }
       }, 100);
     } else {
-      const y = sectionLayouts[sectionName];
+      const y = sectionLayouts[targetSection];
       if (y !== undefined) {
         scrollViewRef.current?.scrollTo({ y: y - HEADER_HEIGHT, animated: true });
       }
@@ -803,10 +827,7 @@ const MainAppRouter = () => {
           .nav-link {
             font-size: 12px;
             padding: 6px 8px;
-          }
-        }
-
-        /* Hero Responsive Overrides */
+                /* Hero Responsive Overrides */
         @media (max-width: 1024px) {
           .hero-wrapper-web {
             height: auto !important;
@@ -816,10 +837,10 @@ const MainAppRouter = () => {
             position: relative !important;
             height: auto !important;
             min-height: 100vh !important;
-            padding: calc(var(--header-height) + 20px) 24px 60px 24px !important;
+            padding: calc(var(--header-height) + 24px) 24px 60px 24px !important;
             flex-direction: column !important;
             align-items: center !important;
-            justify-content: center !important;
+            justify-content: flex-start !important; /* Start immediately below fixed header, do not vertically center */
           }
           .hero-inner-container-web {
             flex-direction: column !important;
@@ -829,6 +850,7 @@ const MainAppRouter = () => {
           }
           .hero-left-web {
             width: 100% !important;
+            min-width: 0 !important; /* Remove min-width to prevent horizontal overflow */
             align-items: center !important;
             text-align: center !important;
             margin-bottom: 20px !important;
@@ -841,25 +863,73 @@ const MainAppRouter = () => {
           }
           .hero-buttons-web {
             justify-content: center !important;
+            width: 100% !important;
+          }
+          .hero-title-container {
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            text-align: center !important;
+            margin-bottom: 12px !important;
+          }
+          .hero-anim-welcome {
+            font-size: 14px !important;
+            line-height: 20px !important;
+            align-self: center !important;
+            text-align: center !important;
+            display: block !important;
+            color: #F5A623 !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            filter: none !important;
           }
           .hero-school-name {
-            font-size: 36px !important;
-            line-height: 44px !important;
+            font-size: 32px !important;
+            line-height: 40px !important;
+            align-self: center !important;
+            text-align: center !important;
+            display: block !important;
+            color: #ffffff !important;
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
+            filter: none !important;
+          }
+          .hero-dynamic-block-outer {
+            min-height: 80px !important; /* Avoid excessive dynamic block height on mobile/tablet */
+            margin-bottom: 16px !important;
+          }
+          .hero-dynamic-block-inner {
+            align-items: center !important;
+            text-align: center !important;
           }
           .hero-title-dynamic {
             font-size: 20px !important;
             line-height: 28px !important;
+            text-align: center !important;
           }
           .hero-subtitle-dynamic {
             font-size: 14px !important;
             line-height: 20px !important;
+            text-align: center !important;
+          }
+          .enquiryCardTitle-web {
+            font-size: 18px !important;
           }
         }
  
         @media (max-width: 767px) {
+          .hero-overlay-web {
+            padding: calc(var(--header-height) + 16px) 16px 40px 16px !important; /* Slightly tighter padding */
+          }
           .hero-school-name {
-            font-size: 28px !important;
-            line-height: 36px !important;
+            font-size: 26px !important;
+            line-height: 32px !important;
+          }
+          .hero-anim-welcome {
+            font-size: 13px !important;
+            line-height: 18px !important;
           }
           .hero-title-dynamic {
             font-size: 18px !important;
@@ -869,8 +939,7 @@ const MainAppRouter = () => {
             font-size: 12px !important;
             line-height: 18px !important;
           }
-        }
-        .why-us-card-web {
+          .why-us-card-web {
             width: 100% !important;
           }
           .coaching-card-web {
@@ -884,6 +953,40 @@ const MainAppRouter = () => {
           }
           .contact-detail-item-web {
             width: 100% !important;
+          }
+          .enquiryCard-web {
+            padding: 16px !important;
+          }
+          .enquiryCardTitle-web {
+            font-size: 15px !important;
+          }
+        }
+ 
+        @media (max-width: 480px) {
+          .hero-overlay-web {
+            padding: calc(var(--header-height) + 10px) 12px 30px 12px !important;
+          }
+          .hero-anim-welcome {
+            font-size: 12px !important;
+            line-height: 16px !important;
+          }
+          .hero-school-name {
+            font-size: 22px !important;
+            line-height: 28px !important;
+          }
+          .hero-title-dynamic {
+            font-size: 16px !important;
+            line-height: 22px !important;
+          }
+          .hero-subtitle-dynamic {
+            font-size: 11px !important;
+            line-height: 16px !important;
+          }
+          .enquiryCard-web {
+            padding: 12px !important;
+          }
+          .enquiryCardTitle-web {
+            font-size: 13px !important;
           }
         }
       `}} />
@@ -1000,122 +1103,66 @@ const MainAppRouter = () => {
       {/* MAIN PUBLIC SCREEN / LANDING PAGE */}
       {currentScreen === 'welcome' && (
         <ScrollView ref={scrollViewRef} style={styles.scrollView} contentContainerStyle={{ paddingTop: 0 }} onScroll={handleScroll} scrollEventThrottle={16}>
-          <View 
-            onLayout={(e) => handleLayout('home', e.nativeEvent.layout.y)} 
-            {...{ className: "hero-wrapper-web" } as any}
-            style={styles.heroWrapper}
-          >
-            
+          {isMobile ? (
             <View 
-              {...{
-                onMouseEnter: () => setIsPlaying(false),
-                onMouseLeave: () => setIsPlaying(true)
-              } as any}
-              style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                width: '100%',
-                height: '100%',
-                zIndex: 0,
-              }}
+              onLayout={(e) => handleLayout('home', e.nativeEvent.layout.y)} 
+              {...{ className: "hero-wrapper-web" } as any}
+              style={[styles.heroWrapper, { height: 'auto', minHeight: '85vh' }]}
             >
-              {slides.map((slide, idx) => (
-                <Image
-                  key={idx}
-                  source={slide.image}
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: '100%',
-                    height: '100%',
-                    opacity: currentSlide === idx ? 1 : 0,
-                    transition: 'opacity 1s ease-in-out',
-                    resizeMode: 'cover',
-                    objectFit: 'cover' as any,
-                    objectPosition: 'center center' as any,
-                    backgroundPosition: 'center center',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundSize: 'cover',
-                  } as any}
-                />
-              ))}
-              <View style={{
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(6, 15, 45, 0.58)',
-                width: '100%',
-                height: '100%',
-              }} />
-            </View>
- 
-            {/* Manual Navigation Arrows */}
-            <Pressable onPress={handlePrevSlide} style={styles.sliderArrowLeft}>
-              <ChevronLeft size={28} color="#ffffff" />
-            </Pressable>
-            <Pressable onPress={handleNextSlide} style={styles.sliderArrowRight}>
-              <ChevronRight size={28} color="#ffffff" />
-            </Pressable>
- 
-            {/* Slider Dots Indicator */}
-            <View style={styles.sliderDotsContainer}>
-              {slides.map((_, idx) => (
-                <Pressable
-                  key={idx}
-                  onPress={() => handleManualSlideSelect(idx)}
-                  style={[
-                    styles.sliderDot,
-                    currentSlide === idx && styles.sliderDotActive
-                  ]}
-                />
-              ))}
-            </View>
- 
-            {/* Static Content Overlay */}
-            <View {...{ className: "hero-overlay-web" } as any} style={styles.heroOverlay}>
-              <View {...{ className: "hero-inner-container-web" } as any} style={styles.heroInnerContainer}>
-                
-                {/* Hero Left Content */}
-                <View {...{ className: "hero-left-web" } as any} style={styles.heroLeft}>
-                  {/* Hero Title Animation Block */}
-                  <View style={{ marginBottom: 16, alignItems: 'flex-start' }}>
-                    <Text {...{ className: "hero-anim-welcome" } as any} style={[styles.heroWelcome, { color: '#F5A623' }]}>WELCOME TO</Text>
-                    <Text {...{ className: "hero-anim-word-1 hero-school-name" } as any} style={styles.heroTitle}>VIDYA BHARATHI</Text>
-                    <Text {...{ className: "hero-anim-word-2 hero-school-name" } as any} style={styles.heroTitle}>VIDYAPEETH</Text>
-                  </View>
- 
-                  {/* Remaining Hero Content with Fade-in Delays */}
-                  <View {...{ className: "hero-anim-estd" } as any} style={styles.estdCapsule}>
-                    <Text style={styles.estdText}>Established in 2012</Text>
-                  </View>
+              {/* Slideshow Background Images & Overlay */}
+              <View style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, width: '100%', height: '100%', zIndex: 0 }}>
+                {slides.map((slide, idx) => (
+                  <Image
+                    key={idx}
+                    source={slide.image}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: currentSlide === idx ? 1 : 0,
+                      transition: 'opacity 1s ease-in-out',
+                      resizeMode: 'cover',
+                      objectFit: 'cover' as any,
+                      objectPosition: 'center center' as any,
+                    } as any}
+                  />
+                ))}
+                <View style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(6, 15, 45, 0.58)',
+                  width: '100%',
+                  height: '100%',
+                }} />
+              </View>
+
+              {/* Static Content Overlay */}
+              <View 
+                {...{ className: "hero-overlay-web" } as any} 
+                style={[styles.heroOverlay, { position: 'relative', height: 'auto', minHeight: '85vh', paddingHorizontal: 20, paddingTop: HEADER_HEIGHT + 40, paddingBottom: 40, justifyContent: 'center' }]}
+              >
+                <View style={{ width: '100%', alignItems: 'center', textAlign: 'center' }}>
+                  {/* Branding Text */}
+                  <Text style={[styles.heroWelcome, { color: '#F5A623', textAlign: 'center' }]}>WELCOME TO</Text>
+                  <Text style={[styles.heroTitle, { fontSize: 28, lineHeight: 34, textAlign: 'center', color: '#ffffff' }]}>VIDYA BHARATHI</Text>
+                  <Text style={[styles.heroTitle, { fontSize: 28, lineHeight: 34, textAlign: 'center', color: '#ffffff', marginBottom: 12 }]}>VIDYAPEETH</Text>
                   
-                  {/* Dynamic Slide Title & Subtitle block */}
-                  <View style={{ minHeight: 120, justifyContent: 'center', alignSelf: 'stretch', marginBottom: 20 }}>
-                    <View key={currentSlide} style={{ alignItems: 'flex-start', alignSelf: 'stretch' }}>
-                      <Text {...{ className: "hero-anim-headline hero-title-dynamic" } as any} style={[styles.heroHeadline, { marginVertical: 0 }]}>
-                        {slides[currentSlide].title}
-                      </Text>
-                      <Text {...{ className: "hero-anim-tagline hero-subtitle-dynamic" } as any} style={[styles.heroSubtitle, { marginTop: 8, marginBottom: 0 }]}>
-                        {slides[currentSlide].subtitle}
-                      </Text>
-                    </View>
-                  </View>
+                  {/* Motto / Tagline */}
+                  <Text style={[styles.heroSubtitle, { fontSize: 14, lineHeight: 20, textAlign: 'center', color: '#FFD8A8', fontStyle: 'italic', marginTop: 8, marginBottom: 24, paddingHorizontal: 16 }]}>
+                    Learning • Discipline • Values • Excellence
+                  </Text>
                   
-                  {/* Static Buttons block */}
-                  <View {...{ className: "hero-anim-buttons hero-buttons-web" } as any} style={styles.heroButtons}>
+                  {/* Action Buttons */}
+                  <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center' }}>
                     <Pressable 
-                      onPress={() => {
-                        setEnquiryFormVisible(true);
-                        scrollToSection('enquiry-form');
-                      }} 
+                      onPress={() => scrollToSection('contact')} 
                       style={[styles.heroBtnApply, { backgroundColor: '#F5A623' }]}
                     >
                       <Text style={[styles.heroBtnText, { color: '#0B1E4D' }]}>
@@ -1132,173 +1179,309 @@ const MainAppRouter = () => {
                     </Pressable>
                   </View>
                 </View>
- 
-                {/* Hero Right: Admission Enquiry Form */}
-                {enquiryFormVisible && (
-                  <View 
-                    onLayout={(e) => handleLayout('enquiry-form', e.nativeEvent.layout.y)} 
-                    {...{ className: "hero-right-web" } as any}
-                    style={styles.heroRight}
-                  >
-                    <View style={styles.enquiryCard}>
-                      
-                      {/* Close button in top-right (on all screen sizes) */}
-                      <Pressable 
-                        onPress={() => { setEnquiryFormVisible(false); setHasClosedEnquiry(true); }} 
-                        {...{ className: "enquiry-close-btn-hover" } as any}
-                        style={styles.enquiryCloseBtn}
-                      >
-                        <X size={14} color="#475569" />
-                      </Pressable>
-
-                      <View style={styles.enquiryCardHeader}>
-                        <Sparkles size={16} color="#FF9F00" />
-                        <Text style={styles.enquiryCardTitle}>Admission Enquiry 2026-27</Text>
-                      </View>
-                      
-                      {!enqSubmitted ? (
-                        <View style={styles.enquiryForm}>
-                          <TextInput
-                            style={styles.enqInput}
-                            placeholder="Student Name *"
-                            placeholderTextColor="#94A3B8"
-                            value={studentName}
-                            onChangeText={setStudentName}
-                          />
-                          <TextInput
-                            style={styles.enqInput}
-                            placeholder="Parent Name *"
-                            placeholderTextColor="#94A3B8"
-                            value={parentName}
-                            onChangeText={setParentName}
-                          />
-                          <TextInput
-                            style={styles.enqInput}
-                            placeholder="Mobile Number *"
-                            placeholderTextColor="#94A3B8"
-                            keyboardType="phone-pad"
-                            value={mobileNumber}
-                            onChangeText={setMobileNumber}
-                          />
-                          <TextInput
-                            style={styles.enqInput}
-                            placeholder="Email Address"
-                            placeholderTextColor="#94A3B8"
-                            keyboardType="email-address"
-                            value={email}
-                            onChangeText={setEmail}
-                          />
-                          
-                          <View style={{ marginBottom: 12, position: 'relative', zIndex: 120 }}>
-                            <Text style={styles.selectLabel}>Admission For: *</Text>
-                            <Pressable 
-                              onPress={() => setDropdownOpen(!dropdownOpen)} 
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                borderWidth: 1.5,
-                                borderColor: '#E2E8F0',
-                                borderRadius: 12,
-                                paddingHorizontal: 16,
-                                height: 44,
-                                backgroundColor: '#F8FAFC',
-                                cursor: 'pointer' as any,
-                              }}
-                            >
-                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{admissionClass || 'Select Class...'}</Text>
-                              <Text style={{ fontSize: 10, color: '#64748B' }}>{dropdownOpen ? '▲' : '▼'}</Text>
-                            </Pressable>
-
-                            {dropdownOpen && (
-                              <View style={{
-                                position: 'absolute',
-                                top: 68,
-                                left: 0,
-                                right: 0,
-                                backgroundColor: '#ffffff',
-                                borderRadius: 12,
-                                borderWidth: 1.5,
-                                borderColor: '#E2E8F0',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 10,
-                                elevation: 5,
-                                zIndex: 200,
-                                maxHeight: 200,
-                                overflow: 'hidden',
-                              }}>
-                                <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }} showsVerticalScrollIndicator={true}>
-                                  {classesList.map((c) => (
-                                    <Pressable
-                                      key={c}
-                                      onPress={() => {
-                                        setAdmissionClass(c);
-                                        setDropdownOpen(false);
-                                      }}
-                                      style={{
-                                        paddingVertical: 10,
-                                        paddingHorizontal: 16,
-                                        backgroundColor: admissionClass === c ? '#F1F5F9' : '#ffffff',
-                                        borderBottomWidth: 1,
-                                        borderBottomColor: '#F1F5F9',
-                                        cursor: 'pointer' as any,
-                                      }}
-                                    >
-                                      <Text style={{
-                                        fontSize: 13,
-                                        color: admissionClass === c ? '#F57C00' : '#1E293B',
-                                        fontWeight: admissionClass === c ? '700' : '500',
-                                      }}>{c}</Text>
-                                    </Pressable>
-                                  ))}
-                                </ScrollView>
-                              </View>
-                            )}
-                          </View>
-
-                          <TextInput
-                            style={styles.enqInput}
-                            placeholder="Locality / Village *"
-                            placeholderTextColor="#94A3B8"
-                            value={locality}
-                            onChangeText={setLocality}
-                          />
-
-                          <Pressable
-                            onPress={handleEnquirySubmit}
-                            style={[styles.enqSubmitBtn, { backgroundColor: '#F57C00' }]}
-                            disabled={enqLoading}
-                          >
-                            {enqLoading ? (
-                              <ActivityIndicator color="#ffffff" />
-                            ) : (
-                              <Text style={styles.enqSubmitBtnText}>Apply Now</Text>
-                            )}
-                          </Pressable>
-                        </View>
-                      ) : (
-                        <View style={styles.enquirySuccess}>
-                          <View style={styles.successIconCircle}>
-                            <ShieldCheck size={40} color="#198754" />
-                          </View>
-                          <Text style={styles.successTitle}>Enquiry Submitted!</Text>
-                          <Text style={styles.successText}>
-                            Thank you for interest in Vidya Bharathi Vidyapeeth. Our admissions desk will review your details and contact you shortly.
-                          </Text>
-                          <Pressable onPress={() => setEnqSubmitted(false)} style={styles.resetEnquiryBtn}>
-                            <Text style={styles.resetEnquiryText}>Submit Another Enquiry</Text>
-                          </Pressable>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                )}
-
               </View>
             </View>
-          </View>
+          ) : (
+            <View 
+              onLayout={(e) => handleLayout('home', e.nativeEvent.layout.y)} 
+              {...{ className: "hero-wrapper-web" } as any}
+              style={styles.heroWrapper}
+            >
+              
+              <View 
+                {...{
+                  onMouseEnter: () => setIsPlaying(false),
+                  onMouseLeave: () => setIsPlaying(true)
+                } as any}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 0,
+                }}
+              >
+                {slides.map((slide, idx) => (
+                  <Image
+                    key={idx}
+                    source={slide.image}
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '100%',
+                      height: '100%',
+                      opacity: currentSlide === idx ? 1 : 0,
+                      transition: 'opacity 1s ease-in-out',
+                      resizeMode: 'cover',
+                      objectFit: 'cover' as any,
+                      objectPosition: 'center center' as any,
+                      backgroundPosition: 'center center',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundSize: 'cover',
+                    } as any}
+                  />
+                ))}
+                <View style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  backgroundColor: 'rgba(6, 15, 45, 0.58)',
+                  width: '100%',
+                  height: '100%',
+                }} />
+              </View>
+   
+              {/* Manual Navigation Arrows */}
+              <Pressable onPress={handlePrevSlide} style={styles.sliderArrowLeft}>
+                <ChevronLeft size={28} color="#ffffff" />
+              </Pressable>
+              <Pressable onPress={handleNextSlide} style={styles.sliderArrowRight}>
+                <ChevronRight size={28} color="#ffffff" />
+              </Pressable>
+   
+              {/* Slider Dots Indicator */}
+              <View style={styles.sliderDotsContainer}>
+                {slides.map((_, idx) => (
+                  <Pressable
+                    key={idx}
+                    onPress={() => handleManualSlideSelect(idx)}
+                    style={[
+                      styles.sliderDot,
+                      currentSlide === idx && styles.sliderDotActive
+                    ]}
+                  />
+                ))}
+              </View>
+   
+              {/* Static Content Overlay */}
+              <View {...{ className: "hero-overlay-web" } as any} style={styles.heroOverlay}>
+                <View {...{ className: "hero-inner-container-web" } as any} style={styles.heroInnerContainer}>
+                  
+                  {/* Hero Left Content */}
+                  <View {...{ className: "hero-left-web" } as any} style={styles.heroLeft}>
+                    {/* Hero Title Animation Block */}
+                    <View {...{ className: "hero-title-container" } as any} style={{ marginBottom: 16, alignItems: 'flex-start' }}>
+                      <Text {...{ className: "hero-anim-welcome" } as any} style={[styles.heroWelcome, { color: '#F5A623' }]}>WELCOME TO</Text>
+                      <Text {...{ className: "hero-anim-word-1 hero-school-name" } as any} style={styles.heroTitle}>VIDYA BHARATHI</Text>
+                      <Text {...{ className: "hero-anim-word-2 hero-school-name" } as any} style={styles.heroTitle}>VIDYAPEETH</Text>
+                    </View>
+   
+                    {/* Remaining Hero Content with Fade-in Delays */}
+                    <View {...{ className: "hero-anim-estd" } as any} style={styles.estdCapsule}>
+                      <Text style={styles.estdText}>Established in 2012</Text>
+                    </View>
+                    
+                    {/* Dynamic Slide Title & Subtitle block */}
+                    <View {...{ className: "hero-dynamic-block-outer" } as any} style={{ minHeight: 120, justifyContent: 'center', alignSelf: 'stretch', marginBottom: 20 }}>
+                      <View key={currentSlide} {...{ className: "hero-dynamic-block-inner" } as any} style={{ alignItems: 'flex-start', alignSelf: 'stretch' }}>
+                        <Text {...{ className: "hero-anim-headline hero-title-dynamic" } as any} style={[styles.heroHeadline, { marginVertical: 0 }]}>
+                          {slides[currentSlide].title}
+                        </Text>
+                        <Text {...{ className: "hero-anim-tagline hero-subtitle-dynamic" } as any} style={[styles.heroSubtitle, { marginTop: 8, marginBottom: 0 }]}>
+                          {slides[currentSlide].subtitle}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    {/* Static Buttons block */}
+                    <View {...{ className: "hero-anim-buttons hero-buttons-web" } as any} style={styles.heroButtons}>
+                      <Pressable 
+                        onPress={() => {
+                          setEnquiryFormVisible(true);
+                          scrollToSection('enquiry-form');
+                        }} 
+                        style={[styles.heroBtnApply, { backgroundColor: '#F5A623' }]}
+                      >
+                        <Text style={[styles.heroBtnText, { color: '#0B1E4D' }]}>
+                          Apply
+                        </Text>
+                      </Pressable>
+                      <Pressable 
+                        onPress={() => scrollToSection('about')} 
+                        style={[styles.heroBtnExplore, { borderColor: '#FFFFFF', borderWidth: 2 }]}
+                      >
+                        <Text style={[styles.heroBtnText, { color: '#ffffff' }]}>
+                          Explore
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+   
+                  {/* Hero Right: Admission Enquiry Form */}
+                  {enquiryFormVisible && (
+                    <View 
+                      onLayout={(e) => handleLayout('enquiry-form', e.nativeEvent.layout.y)} 
+                      {...{ className: "hero-right-web" } as any}
+                      style={styles.heroRight}
+                    >
+                      <View {...{ className: "enquiryCard-web" } as any} style={styles.enquiryCard}>
+                        
+                        {/* Close button in top-right (on all screen sizes) */}
+                        <Pressable 
+                          onPress={() => { setEnquiryFormVisible(false); setHasClosedEnquiry(true); }} 
+                          {...{ className: "enquiry-close-btn-hover" } as any}
+                          style={styles.enquiryCloseBtn}
+                        >
+                          <X size={14} color="#475569" />
+                        </Pressable>
+  
+                        <View {...{ className: "enquiryCardHeader-web" } as any} style={[styles.enquiryCardHeader, { flexWrap: 'wrap' } as any]}>
+                          <Sparkles size={16} color="#FF9F00" style={{ flexShrink: 0 } as any} />
+                          <Text {...{ className: "enquiryCardTitle-web" } as any} style={[styles.enquiryCardTitle, { flex: 1 }]}>Admission Enquiry 2026-27</Text>
+                        </View>
+                        
+                        {!enqSubmitted ? (
+                          <View style={styles.enquiryForm}>
+                            <TextInput
+                              style={styles.enqInput}
+                              placeholder="Student Name *"
+                              placeholderTextColor="#94A3B8"
+                              value={studentName}
+                              onChangeText={setStudentName}
+                            />
+                            <TextInput
+                              style={styles.enqInput}
+                              placeholder="Parent Name *"
+                              placeholderTextColor="#94A3B8"
+                              value={parentName}
+                              onChangeText={setParentName}
+                            />
+                            <TextInput
+                              style={styles.enqInput}
+                              placeholder="Mobile Number *"
+                              placeholderTextColor="#94A3B8"
+                              keyboardType="phone-pad"
+                              value={mobileNumber}
+                              onChangeText={setMobileNumber}
+                            />
+                            <TextInput
+                              style={styles.enqInput}
+                              placeholder="Email Address"
+                              placeholderTextColor="#94A3B8"
+                              keyboardType="email-address"
+                              value={email}
+                              onChangeText={setEmail}
+                            />
+                            
+                            <View style={{ marginBottom: 12, position: 'relative', zIndex: 120 }}>
+                              <Text style={styles.selectLabel}>Admission For: *</Text>
+                              <Pressable 
+                                onPress={() => setDropdownOpen(!dropdownOpen)} 
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  borderWidth: 1.5,
+                                  borderColor: '#E2E8F0',
+                                  borderRadius: 12,
+                                  paddingHorizontal: 16,
+                                  height: 44,
+                                  backgroundColor: '#F8FAFC',
+                                  cursor: 'pointer' as any,
+                                }}
+                              >
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{admissionClass || 'Select Class...'}</Text>
+                                <Text style={{ fontSize: 10, color: '#64748B' }}>{dropdownOpen ? '▲' : '▼'}</Text>
+                              </Pressable>
+  
+                              {dropdownOpen && (
+                                <View style={{
+                                  position: 'absolute',
+                                  top: 68,
+                                  left: 0,
+                                  right: 0,
+                                  backgroundColor: '#ffffff',
+                                  borderRadius: 12,
+                                  borderWidth: 1.5,
+                                  borderColor: '#E2E8F0',
+                                  shadowColor: '#000',
+                                  shadowOffset: { width: 0, height: 4 },
+                                  shadowOpacity: 0.1,
+                                  shadowRadius: 10,
+                                  elevation: 5,
+                                  zIndex: 200,
+                                  maxHeight: 200,
+                                  overflow: 'hidden',
+                                }}>
+                                  <ScrollView nestedScrollEnabled={true} style={{ maxHeight: 200 }} showsVerticalScrollIndicator={true}>
+                                    {classesList.map((c) => (
+                                      <Pressable
+                                        key={c}
+                                        onPress={() => {
+                                          setAdmissionClass(c);
+                                          setDropdownOpen(false);
+                                        }}
+                                        style={{
+                                          paddingVertical: 10,
+                                          paddingHorizontal: 16,
+                                          backgroundColor: admissionClass === c ? '#F1F5F9' : '#ffffff',
+                                          borderBottomWidth: 1,
+                                          borderBottomColor: '#F1F5F9',
+                                          cursor: 'pointer' as any,
+                                        }}
+                                      >
+                                        <Text style={{
+                                          fontSize: 13,
+                                          color: admissionClass === c ? '#F57C00' : '#1E293B',
+                                          fontWeight: admissionClass === c ? '700' : '500',
+                                        }}>{c}</Text>
+                                      </Pressable>
+                                    ))}
+                                  </ScrollView>
+                                </View>
+                              )}
+                            </View>
+  
+                            <TextInput
+                              style={styles.enqInput}
+                              placeholder="Locality / Village *"
+                              placeholderTextColor="#94A3B8"
+                              value={locality}
+                              onChangeText={setLocality}
+                            />
+  
+                            <Pressable
+                              onPress={handleEnquirySubmit}
+                              style={[styles.enqSubmitBtn, { backgroundColor: '#F57C00' }]}
+                              disabled={enqLoading}
+                            >
+                              {enqLoading ? (
+                                <ActivityIndicator color="#ffffff" />
+                              ) : (
+                                <Text style={styles.enqSubmitBtnText}>Apply Now</Text>
+                              )}
+                            </Pressable>
+                          </View>
+                        ) : (
+                          <View style={styles.enquirySuccess}>
+                            <View style={styles.successIconCircle}>
+                              <ShieldCheck size={40} color="#198754" />
+                            </View>
+                            <Text style={styles.successTitle}>Enquiry Submitted!</Text>
+                            <Text style={styles.successText}>
+                              Thank you for interest in Vidya Bharathi Vidyapeeth. Our admissions desk will review your details and contact you shortly.
+                            </Text>
+                            <Pressable onPress={() => setEnqSubmitted(false)} style={styles.resetEnquiryBtn}>
+                              <Text style={styles.resetEnquiryText}>Submit Another Enquiry</Text>
+                            </Pressable>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+  
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* ================= STATISTICS SECTION ================= */}
           <View style={styles.statsSection}>
@@ -1448,17 +1631,17 @@ const MainAppRouter = () => {
             </View>
           </View>
 
-          {/* ================= CONTACT SECTION ================= */}
+{/* ================= CONTACT SECTION ================= */}
           <View onLayout={(e) => handleLayout('contact', e.nativeEvent.layout.y)} style={styles.contactSection}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionBadge}>GET IN TOUCH</Text>
               <Text style={styles.sectionMainTitle}>Contact Information</Text>
             </View>
 
-            <View {...{ className: "contact-grid-web" } as any} style={styles.contactGrid}>
+            <View {...{ className: "contact-grid-web" } as any} style={[styles.contactGrid, { paddingHorizontal: windowWidth < 480 ? 16 : 24, gap: windowWidth < 480 ? 20 : 30 }]}>
               
               {/* Map & Addresses */}
-              <View style={styles.contactLeft}>
+              <View style={[styles.contactLeft, { minWidth: windowWidth < 480 ? '100%' : 300 }]}>
                 <View style={styles.mapMock}>
                   <MapPin size={32} color="#DC3545" />
                   <Text style={styles.mapTitle}>VIDYA BHARATHI VIDYAPEETH</Text>
@@ -1502,7 +1685,7 @@ const MainAppRouter = () => {
               </View>
 
               {/* Message Form */}
-              <View style={styles.contactRight}>
+              <View style={[styles.contactRight, { minWidth: windowWidth < 480 ? '100%' : 300 }]}>
                 <View style={styles.messageCard}>
                   <Text style={styles.messageTitle}>Send a Quick Message</Text>
                   
@@ -1916,9 +2099,8 @@ const styles = StyleSheet.create({
     minWidth: 320,
   },
   heroRight: {
-    width: '40%',
-    maxWidth: 460,
-    minWidth: 380,
+    width: 400,
+    maxWidth: '100%',
   },
   heroWelcome: {
     color: '#F5A623',
@@ -1989,14 +2171,12 @@ const styles = StyleSheet.create({
   },
 
   // Enquiry Card Right Panel
-  heroRight: {
-    width: 400,
-    maxWidth: '100%',
-  },
   enquiryCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.90)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
+    ...({
+      backdropFilter: 'blur(16px)',
+      WebkitBackdropFilter: 'blur(16px)',
+    } as any),
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,

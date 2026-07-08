@@ -569,6 +569,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,

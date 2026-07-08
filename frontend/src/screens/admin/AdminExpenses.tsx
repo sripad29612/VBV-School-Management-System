@@ -681,6 +681,9 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
     borderRadius: 16,
     padding: 18,
     maxHeight: '90%',
