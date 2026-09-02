@@ -60,6 +60,7 @@ Step-by-step workflow
 6.The system displays or manages the relevant information.
 7.The user can continue to another module through the application navigation.
 
+
 ---
 
 🛠️ Technology Stack
