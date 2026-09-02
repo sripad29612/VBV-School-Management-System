@@ -49,17 +49,6 @@ The interface is designed to provide a usable experience across different screen
 ### 🎨 Modern User Interface
 The application focuses on a clean, structured, and user-friendly design to make navigation easier.
 
----
-
-Step-by-step workflow
-1.The user opens the VBV School Management System.
-2.The user accesses the available system interface.
-3.The user navigates through the dashboard and available modules.
-4.The required school management section is selected.
-5.The user performs the available operation.
-6.The system displays or manages the relevant information.
-7.The user can continue to another module through the application navigation.
-
 
 ---
 
@@ -75,6 +64,7 @@ Frontend: Web-based user interface
 Styling: Modern CSS/UI technologies
 Application Logic: Client-side application logic
 Development Tools: Modern web development tooling
+
 
 ---
 
